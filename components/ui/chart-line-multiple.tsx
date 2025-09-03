@@ -1,14 +1,11 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
-import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { useMemo } from "react";
 
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -19,7 +16,6 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-// 🎨 Define color palette for dynamic lines
 const CHART_COLORS = [
   "var(--chart-1)",
   "var(--chart-2)",
@@ -44,7 +40,6 @@ export function ChartLineMultiple({
   xAxisKey,
   excludeKeys = [],
 }: ChartLineMultipleProps) {
-  // 🔍 Auto-detect x-axis & y-axis keys
   const { chartConfig, dataKeys, detectedXAxisKey } = useMemo(() => {
     if (!chartData || chartData.length === 0) {
       return { chartConfig: {}, dataKeys: [], detectedXAxisKey: "" };
@@ -53,7 +48,6 @@ export function ChartLineMultiple({
     const firstItem = chartData[0];
     const allKeys = Object.keys(firstItem);
 
-    // Auto-detect X-axis key (default = first string-like key)
     const xKey =
       xAxisKey ||
       allKeys.find(
@@ -67,7 +61,6 @@ export function ChartLineMultiple({
       ) ||
       allKeys[0];
 
-    // Collect numeric keys (Y-axis values)
     const yKeys = allKeys.filter(
       (key) =>
         key !== xKey &&
@@ -75,7 +68,6 @@ export function ChartLineMultiple({
         typeof firstItem[key] === "number"
     );
 
-    // Build chart config with colors + labels
     const config: ChartConfig = {};
     yKeys.forEach((key, index) => {
       config[key] = {
@@ -120,20 +112,11 @@ export function ChartLineMultiple({
       <LineChart
         accessibilityLayer
         data={chartData}
-        margin={{ left: 12, right: 12 }}
+        margin={{ left: 40, right: 12 }}
       >
-        <CartesianGrid vertical={false} />
-        <XAxis
-          dataKey={detectedXAxisKey}
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          tickFormatter={(value) =>
-            typeof value === "string" && value.length > 6
-              ? value.slice(0, 3)
-              : value
-          }
-        />
+        <CartesianGrid />
+        <XAxis dataKey={detectedXAxisKey} tickMargin={8} />
+        <YAxis tickMargin={8} />
         <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
         {renderLines()}
       </LineChart>

@@ -97,7 +97,7 @@ export function ChartBarMultiple({
   }
 
   return (
-    <ChartContainer config={chartConfig} className="max-h-[550px]">
+    <ChartContainer config={chartConfig}>
       <BarChart accessibilityLayer data={chartData}>
         <CartesianGrid vertical={false} />
         <XAxis
