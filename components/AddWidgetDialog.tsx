@@ -173,7 +173,7 @@ const AddWidgetDialog = memo(
     const [chartType, setChartType] = useState<"line" | "bar">("line");
 
     const debouncedSearch = useDebounce(searchField, 800);
-    const { addWidget } = useWidgetsStore();
+    const { addWidget, updateWidget } = useWidgetsStore();
 
     const handleTest = useCallback(async () => {
       try {
@@ -253,7 +253,7 @@ const AddWidgetDialog = memo(
       }
 
       const newWidget: WidgetProp = {
-        id: new Date().toISOString(),
+        id: widgetData?.id || new Date().toISOString(),
         widgetName,
         endpoint,
         refreshInterval,
@@ -262,8 +262,11 @@ const AddWidgetDialog = memo(
         headers,
         chartType,
       };
-
-      addWidget(newWidget);
+      if (widgetData) {
+        updateWidget(widgetData.id, newWidget);
+      } else {
+        addWidget(newWidget);
+      }
       resetForm();
       toast.success("Widget Saved successfully!");
     };

@@ -15,9 +15,10 @@ export interface WidgetProp {
 interface WidgetsStore {
   widgets: WidgetProp[];
   addWidget: (widget: WidgetProp) => void;
-  removeWidget: (widgetName: string) => void;
+  removeWidget: (widgetId: string) => void;
   clearWidgets: () => void;
   reorderWidgets: (widgets: WidgetProp[]) => void;
+  updateWidget: (id: string, newWidget: WidgetProp) => void;
 }
 
 const useWidgetsStore = create<WidgetsStore>()(
@@ -32,6 +33,12 @@ const useWidgetsStore = create<WidgetsStore>()(
         })),
       clearWidgets: () => set({ widgets: [] }),
       reorderWidgets: (widgets) => set({ widgets }),
+      updateWidget: (id, newWidget) =>
+        set((state) => ({
+          widgets: state.widgets.map((w) =>
+            w.id === id ? { ...w, ...newWidget } : w
+          ),
+        })),
     }),
     { name: "widgets-storage" }
   )

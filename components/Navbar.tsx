@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { BarChart3, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AddWidgetDialog from "./AddWidgetDialog";
@@ -9,12 +8,12 @@ const Navbar = () => {
     <header className="sticky top-0 z-50 w-full border-b dark:border-zinc-700">
       <div className="flex h-14 items-center justify-between mx-[5%]">
         {/* Logo and Brand */}
-        <Link href="/" className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2">
           <BarChart3 size={24} className="text-primary" />
           <span className="hidden font-bold sm:inline-block">
             Finance Dashboard
           </span>
-        </Link>
+        </div>
 
         {/* Right Side Actions */}
         <div className="flex items-center space-x-2">
