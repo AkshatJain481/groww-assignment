@@ -154,7 +154,7 @@ const AddWidgetDialog = memo(
     widgetData,
   }: {
     children: React.ReactNode;
-    widgetData: WidgetProp;
+    widgetData?: WidgetProp;
   }) => {
     const [open, setOpen] = useState<boolean>(false);
     const [widgetName, setWidgetName] = useState<string>("");
