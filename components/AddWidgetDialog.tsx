@@ -40,6 +40,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import useDebounce from "@/hooks/useDebounce";
 import useWidgetsStore, { WidgetProp } from "@/store/useWidgetsStore";
+import { v4 as uuidv4 } from "uuid";
 
 type SelectedField = { path: string; value: unknown; label?: string };
 
@@ -159,7 +160,7 @@ const AddWidgetDialog = memo(
     const [open, setOpen] = useState<boolean>(false);
     const [widgetName, setWidgetName] = useState<string>("");
     const [endpoint, setEndpoint] = useState<string>("");
-    const [refreshInterval, setRefreshInterval] = useState<number>(30);
+    const [refreshInterval, setRefreshInterval] = useState<number | "">(30);
     const [widgetType, setWidgetType] = useState<"card" | "table" | "chart">(
       "card"
     );
@@ -246,14 +247,17 @@ const AddWidgetDialog = memo(
         return toast.warning("Please fill all labels!");
       if (widgetType === "chart" && !hasXYLabels(selectedFields))
         return toast.warning("Please select 1 x-axis and >=1 y-axis!");
-
+      if (!refreshInterval || typeof refreshInterval !== "number")
+        return toast.warning("Refresh interval is mandatory!");
+      if (refreshInterval < 1 && refreshInterval > 3600)
+        return toast.warning("Refresh interval should be in range 1 to 3600!");
       const headers: Record<string, string> = {};
       if (headerKey && headerValue && isHeadersOpen) {
         headers[headerKey] = headerValue;
       }
 
       const newWidget: WidgetProp = {
-        id: widgetData?.id || new Date().toISOString(),
+        id: widgetData?.id || uuidv4(),
         widgetName,
         endpoint,
         refreshInterval,
@@ -349,13 +353,15 @@ const AddWidgetDialog = memo(
             onValueChange={setHeaderValue}
           />
 
-          <Label>Refresh Interval (1–1800s)</Label>
+          <Label>Refresh Interval (1–3600s)</Label>
           <Input
-            type="number"
-            value={refreshInterval}
+            type="text"
+            value={refreshInterval === 0 ? "" : refreshInterval.toString()}
             onChange={(e) => {
-              const num = Number(e.target.value);
-              if (num > 0 && num <= 1800) setRefreshInterval(num);
+              const val = e.target.value;
+              if (/^\d*$/.test(val)) {
+                setRefreshInterval(val === "" ? "" : Number(val));
+              }
             }}
           />
 
