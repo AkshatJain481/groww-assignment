@@ -91,17 +91,6 @@ export function extractArrayKeys(obj: any, parent: string = ""): PathInfo[] {
   return result;
 }
 
-export function formatChartPoints(data: any[], xPath: string, yPath: string) {
-  const getValueByPath = (obj: any, path: string) => {
-    return path.split(" -> ").reduce((acc, key) => acc?.[key], obj);
-  };
-
-  return data.map((item) => ({
-    x: getValueByPath(item, xPath),
-    y: getValueByPath(item, yPath),
-  }));
-}
-
 export function debounce<T extends (...args: any[]) => void>(
   fn: T,
   delay: number
@@ -114,4 +103,13 @@ export function debounce<T extends (...args: any[]) => void>(
       fn(...args);
     }, delay);
   };
+}
+
+export function getNested(obj: any, path: string[]): any {
+  let current = obj;
+  for (const key of path) {
+    if (!current || typeof current !== "object") return null;
+    current = current[key];
+  }
+  return current;
 }

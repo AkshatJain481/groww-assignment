@@ -41,7 +41,113 @@ import { toast } from "sonner";
 import useDebounce from "@/hooks/useDebounce";
 import useWidgetsStore, { WidgetProp } from "@/store/useWidgetsStore";
 
-type SelectedField = { path: string; value: any; label?: string };
+type SelectedField = { path: string; value: unknown; label?: string };
+
+type SelectedFieldCardProps = {
+  field: SelectedField;
+  index: number;
+  widgetType: "card" | "table" | "chart";
+  onRemove: (path: string) => void;
+  onUpdate: (index: number, label: string) => void;
+};
+
+const SelectedFieldCard = memo(
+  ({
+    field,
+    index,
+    widgetType,
+    onRemove,
+    onUpdate,
+  }: SelectedFieldCardProps) => {
+    return (
+      <Card className="dark:bg-slate-700 gap-2">
+        <CardHeader>
+          <CardTitle>{field.path}</CardTitle>
+          <CardDescription>
+            {typeof field.value} : "{String(field.value)}"
+          </CardDescription>
+          <CardAction>
+            <Button
+              size="icon"
+              variant="destructive"
+              onClick={() => onRemove(field.path)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          {widgetType !== "chart" ? (
+            <Input
+              placeholder="label for this value..."
+              value={field.label || ""}
+              onChange={(e) => onUpdate(index, e.target.value)}
+            />
+          ) : (
+            <Select
+              value={field.label}
+              onValueChange={(value) => onUpdate(index, value)}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="select axis" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="x-axis">X-Axis</SelectItem>
+                <SelectItem value="y-axis">Y-Axis</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+);
+
+const HeaderConfig = memo(
+  ({
+    isOpen,
+    headerKey,
+    headerValue,
+    onToggle,
+    onKeyChange,
+    onValueChange,
+  }: {
+    isOpen: boolean;
+    headerKey: string;
+    headerValue: string;
+    onToggle: (v: boolean) => void;
+    onKeyChange: (v: string) => void;
+    onValueChange: (v: string) => void;
+  }) => (
+    <>
+      <Label htmlFor="header-key">Header config for API key</Label>
+      <Switch
+        id="header-key"
+        checked={isOpen}
+        onCheckedChange={onToggle}
+        className="cursor-pointer"
+      />
+      <div
+        className={cn(
+          "flex items-center justify-between gap-4",
+          !isOpen && "hidden"
+        )}
+      >
+        <Input
+          type="text"
+          value={headerKey}
+          onChange={(e) => onKeyChange(e.target.value)}
+        />
+        <Input
+          type="text"
+          value={headerValue}
+          onChange={(e) => onValueChange(e.target.value)}
+        />
+      </div>
+    </>
+  )
+);
+HeaderConfig.displayName = "HeaderConfig";
 
 const AddWidgetDialog = memo(({ children }: { children: React.ReactNode }) => {
   const [open, setOpen] = useState<boolean>(false);
@@ -60,10 +166,10 @@ const AddWidgetDialog = memo(({ children }: { children: React.ReactNode }) => {
   const [searchField, setSearchField] = useState<string>("");
   const [chartType, setChartType] = useState<"line" | "bar">("line");
 
-  const debouncedSearch = useDebounce(searchField, 1500);
+  const debouncedSearch = useDebounce(searchField, 800);
   const { addWidget } = useWidgetsStore();
 
-  const handleTest = async () => {
+  const handleTest = useCallback(async () => {
     try {
       setLoading(true);
       const headers: Record<string, string> = {};
@@ -85,51 +191,55 @@ const AddWidgetDialog = memo(({ children }: { children: React.ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [endpoint, headerKey, headerValue, isHeadersOpen]);
 
-  const handleAddField = useCallback(
-    (path: string, value: any) => {
-      setSelectedFields((prev) =>
-        prev.find((f) => f.path === path) ? prev : [...prev, { path, value }]
-      );
-    },
-    [widgetType, toast]
-  );
+  const handleAddField = useCallback((path: string, value: unknown) => {
+    setSelectedFields((prev) =>
+      prev.some((f) => f.path === path) ? prev : [...prev, { path, value }]
+    );
+  }, []);
 
-  const handleRemoveField = (path: string) => {
-    setSelectedFields(selectedFields.filter((f) => f.path !== path));
-  };
+  const handleRemoveField = useCallback((path: string) => {
+    setSelectedFields((prev) => prev.filter((f) => f.path !== path));
+  }, []);
 
-  const handleWidgetType = (widget: "card" | "chart" | "table") => {
+  const handleUpdateFieldLabel = useCallback((index: number, label: string) => {
+    setSelectedFields((prev) => {
+      const newFields = [...prev];
+      newFields[index] = { ...newFields[index], label };
+      return newFields;
+    });
+  }, []);
+
+  const handleWidgetType = useCallback((widget: "card" | "chart" | "table") => {
     setWidgetType(widget);
     setSelectedFields([]);
+  }, []);
+
+  const hasXYLabels = (arr: { label?: string }[]) => {
+    const xCount = arr.filter((item) => item.label === "x-axis").length;
+    const yCount = arr.filter((item) => item.label === "y-axis").length;
+    return xCount === 1 && yCount >= 1;
   };
 
+  const hasValidLabels = (arr: SelectedField[]) =>
+    arr.every((item) => item.label?.trim());
+
   const widgetValidation = () => {
-    if (!widgetName) {
-      toast.warning("Widget Name is mandatory!");
-      return;
-    } else if (!endpoint) {
-      toast.warning("API URL is mandatory!");
-      return;
-    } else if (selectedFields?.length == 0) {
-      toast.warning("Please select some fields so we can display them!");
-      return;
-    } else if (!hasValidLabels(selectedFields)) {
-      toast.warning(
-        "Please fill all labels for each field in selected fields!"
-      );
-      return;
-    } else if (widgetType == "chart" && !hasXYLabels(selectedFields)) {
-      toast.warning(
-        "Please select a unique x-axis field. y-axis fields can be more than one!"
-      );
-      return;
-    }
+    if (!widgetName) return toast.warning("Widget Name is mandatory!");
+    if (!endpoint) return toast.warning("API URL is mandatory!");
+    if (selectedFields.length === 0)
+      return toast.warning("Please select some fields!");
+    if (!hasValidLabels(selectedFields))
+      return toast.warning("Please fill all labels!");
+    if (widgetType === "chart" && !hasXYLabels(selectedFields))
+      return toast.warning("Please select 1 x-axis and >=1 y-axis!");
+
     const headers: Record<string, string> = {};
     if (headerKey && headerValue && isHeadersOpen) {
       headers[headerKey] = headerValue;
     }
+
     const newWidget: WidgetProp = {
       id: new Date().toISOString(),
       widgetName,
@@ -138,8 +248,9 @@ const AddWidgetDialog = memo(({ children }: { children: React.ReactNode }) => {
       widgetType,
       fields: selectedFields,
       headers,
-      chartType
+      chartType,
     };
+
     addWidget(newWidget);
     resetForm();
     toast.success("Widget Saved successfully!");
@@ -148,7 +259,7 @@ const AddWidgetDialog = memo(({ children }: { children: React.ReactNode }) => {
   const resetForm = () => {
     setWidgetName("");
     setSearchField("");
-    setApiData("");
+    setApiData(null);
     setEndpoint("");
     setSelectedFields([]);
     setRefreshInterval(30);
@@ -157,18 +268,6 @@ const AddWidgetDialog = memo(({ children }: { children: React.ReactNode }) => {
     setHeaderValue("");
     setOpen(false);
   };
-
-  const hasXYLabels = (arr: { label?: string }[]) => {
-    const xCount = arr.filter((item) => item.label === "x-axis").length;
-    const yCount = arr.filter((item) => item.label === "y-axis").length;
-
-    return xCount === 1 && yCount >= 1;
-  };
-
-  const hasValidLabels = (arr: SelectedField[]) =>
-    arr.every(
-      (item) => typeof item.label === "string" && item.label.trim() !== ""
-    );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -197,54 +296,28 @@ const AddWidgetDialog = memo(({ children }: { children: React.ReactNode }) => {
           />
           <Button disabled={loading} size="sm" onClick={handleTest}>
             <RefreshCcw
-              className={cn(
-                "cursor-pointer",
-                `${loading ? "animate-spin" : ""}`
-              )}
+              className={cn("cursor-pointer", loading && "animate-spin")}
             />
             Connect
           </Button>
         </div>
 
-        <Label htmlFor="header-key">header config for API key</Label>
-        <Switch
-          id="header-key"
-          checked={isHeadersOpen}
-          onCheckedChange={setIsHeadersOpen}
-          className="cursor-pointer"
+        <HeaderConfig
+          isOpen={isHeadersOpen}
+          headerKey={headerKey}
+          headerValue={headerValue}
+          onToggle={setIsHeadersOpen}
+          onKeyChange={setHeaderKey}
+          onValueChange={setHeaderValue}
         />
-        <div
-          className={cn(
-            "flex items-center justify-between gap-4",
-            !isHeadersOpen && "hidden"
-          )}
-        >
-          <Input
-            type="text"
-            value={headerKey}
-            onChange={(e) => {
-              setHeaderKey(e.target.value);
-            }}
-          />
-          <Input
-            type="text"
-            value={headerValue}
-            onChange={(e) => {
-              setHeaderValue(e.target.value);
-            }}
-          />
-        </div>
 
-        <Label>
-          Refresh Interval (seconds) (should be in the range 1 to 1800)
-        </Label>
+        <Label>Refresh Interval (1–1800s)</Label>
         <Input
           type="number"
           value={refreshInterval}
           onChange={(e) => {
-            if (Number(e.target.value) > 0 && Number(e.target.value) <= 1800) {
-              setRefreshInterval(Number(e.target.value));
-            }
+            const num = Number(e.target.value);
+            if (num > 0 && num <= 1800) setRefreshInterval(num);
           }}
         />
 
@@ -272,6 +345,7 @@ const AddWidgetDialog = memo(({ children }: { children: React.ReactNode }) => {
             <ChartColumnBig /> Chart
           </Button>
         </div>
+
         {widgetType === "chart" && (
           <>
             <Label>Chart Type</Label>
@@ -296,7 +370,7 @@ const AddWidgetDialog = memo(({ children }: { children: React.ReactNode }) => {
 
         <Label>Search Fields</Label>
         <Input
-          value={searchField || ""}
+          value={searchField}
           onChange={(e) => setSearchField(e.target.value)}
           placeholder="search fields..."
           type="search"
@@ -313,66 +387,15 @@ const AddWidgetDialog = memo(({ children }: { children: React.ReactNode }) => {
         {selectedFields.length > 0 && (
           <>
             <Label>Selected Fields</Label>
-            {selectedFields.map((f, id) => (
-              <Card key={f.path} className="dark:bg-slate-700 gap-2">
-                <CardHeader>
-                  <CardTitle>{f.path}</CardTitle>
-                  <CardDescription>
-                    {typeof f.value} : "{String(f.value)}"
-                  </CardDescription>
-                  <CardAction>
-                    <Button
-                      size="icon"
-                      variant="destructive"
-                      onClick={() => handleRemoveField(f.path)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </CardAction>
-                </CardHeader>
-                <CardContent>
-                  {widgetType != "chart" ? (
-                    <Input
-                      placeholder="label for this value..."
-                      value={selectedFields[id]?.label}
-                      onChange={(e) => {
-                        setSelectedFields((prev) => {
-                          const newFields = prev;
-                          newFields[id].label = e.target.value;
-                          return newFields;
-                        });
-                      }}
-                    />
-                  ) : (
-                    <Select
-                      value={selectedFields[id]?.label}
-                      onValueChange={(value) => {
-                        if (
-                          value === "y-axis" &&
-                          typeof selectedFields[id].value !== "number"
-                        ) {
-                          toast.warning(
-                            "This Field might not work for y-axis if it isn't a number, please try to use numeric data type"
-                          );
-                        }
-                        setSelectedFields((prev) => {
-                          const newFields = prev;
-                          newFields[id].label = value;
-                          return newFields;
-                        });
-                      }}
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="select axis" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="x-axis">X-Axis</SelectItem>
-                        <SelectItem value="y-axis">Y-Axis</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                </CardContent>
-              </Card>
+            {selectedFields.map((f, i) => (
+              <SelectedFieldCard
+                key={f.path}
+                field={f}
+                index={i}
+                widgetType={widgetType}
+                onRemove={handleRemoveField}
+                onUpdate={handleUpdateFieldLabel}
+              />
             ))}
           </>
         )}

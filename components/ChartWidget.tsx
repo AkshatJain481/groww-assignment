@@ -1,23 +1,14 @@
-"use client";
-
 import { useEffect, useState, useCallback } from "react";
 import { WidgetProp } from "@/store/useWidgetsStore";
-import { AlertCircle, RefreshCcw, Trash2 } from "lucide-react";
-import { ScaleLoader } from "react-spinners";
-import { cn } from "@/lib/utils";
 import useWidgetsStore from "@/store/useWidgetsStore";
+
+import ActionButtons from "@/components/common/ActionButtons";
+import ErrorMessage from "@/components/common/ErrorMessage";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
+
 import { ChartBarMultiple } from "./ui/chart-bar-multiple";
 import { ChartLineMultiple } from "./ui/chart-line-multiple";
-
-// ✅ Walk through nested object by path
-function getNested(obj: any, path: string[]): any {
-  let current = obj;
-  for (const key of path) {
-    if (!current || typeof current !== "object") return null;
-    current = current[key];
-  }
-  return current;
-}
+import { getNested } from "@/lib/utils";
 
 const ChartWidget = ({ widget }: { widget: WidgetProp }) => {
   const [chartData, setChartData] = useState<any[]>([]);
@@ -37,8 +28,11 @@ const ChartWidget = ({ widget }: { widget: WidgetProp }) => {
           ? { headers: widget.headers }
           : {}
       );
-      if (!response.ok)
+
+      if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
       const result = await response.json();
       setError(null);
 
@@ -61,8 +55,9 @@ const ChartWidget = ({ widget }: { widget: WidgetProp }) => {
       const basePath = parts.slice(0, -1);
       const arrayData = getNested(result, basePath);
 
-      if (!Array.isArray(arrayData))
+      if (!Array.isArray(arrayData)) {
         throw new Error("Expected array in response");
+      }
 
       const xKey = parts[parts.length - 1];
 
@@ -86,7 +81,7 @@ const ChartWidget = ({ widget }: { widget: WidgetProp }) => {
     } finally {
       setLoading(false);
     }
-  }, [widget.endpoint, widget.fields, widget.headers]);
+  }, []);
 
   // ✅ Refresh interval
   useEffect(() => {
@@ -98,41 +93,22 @@ const ChartWidget = ({ widget }: { widget: WidgetProp }) => {
   return (
     <div className="space-y-6">
       {/* Controls */}
-      <div className="flex items-center justify-end gap-4">
-        <RefreshCcw
-          size={20}
-          className={cn(
-            "cursor-pointer hover:text-primary transition-colors",
-            loading ? "animate-spin" : ""
-          )}
-          onClick={fetchData}
-        />
-        <Trash2
-          className="cursor-pointer hover:text-destructive transition-colors"
-          size={20}
-          onClick={() => removeWidget(widget.id)}
-        />
-      </div>
+      <ActionButtons
+        onRefresh={fetchData}
+        onRemove={() => removeWidget(widget.id)}
+        loading={loading}
+      />
 
       {/* Loading */}
-      {loading && !error && chartData.length === 0 && (
-        <div className="flex items-center justify-center py-8">
-          <ScaleLoader className="h-16 w-16" color="#00fa19" />
-        </div>
-      )}
+      {loading && !error && chartData.length === 0 && <LoadingSpinner />}
 
       {/* Error */}
-      {error && (
-        <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-          <AlertCircle size={16} className="text-red-500" />
-          <div className="text-sm text-red-600 dark:text-red-300">{error}</div>
-        </div>
-      )}
+      {error && <ErrorMessage error={error} />}
 
       {/* Chart */}
       {chartData.length > 0 && (
         <>
-          {widget.chartType == "bar" ? (
+          {widget.chartType === "bar" ? (
             <ChartBarMultiple chartData={chartData} />
           ) : (
             <ChartLineMultiple chartData={chartData} />

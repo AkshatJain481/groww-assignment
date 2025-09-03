@@ -25,7 +25,7 @@ const WidgetCanvas = () => {
 
   if (widgets.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-[200px] border-2 border-dashed border-muted-foreground/25 rounded-lg">
+      <div className="flex items-center justify-center min-h-[200px] border-2 border-dashed border-muted-foreground/25 rounded-lg m-4">
         <p className="text-muted-foreground">No widgets yet</p>
       </div>
     );

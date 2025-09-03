@@ -1,8 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
 import { WidgetProp } from "@/store/useWidgetsStore";
-import { AlertCircle, RefreshCcw, Trash2 } from "lucide-react";
-import { ScaleLoader } from "react-spinners";
-import { cn } from "@/lib/utils";
 import useWidgetsStore from "@/store/useWidgetsStore";
 import {
   Table,
@@ -12,18 +9,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getNested } from "@/lib/utils";
 
-// ✅ Utility: walk through nested object by path
-function getNested(obj: any, path: string[]): any {
-  let current = obj;
-  for (const key of path) {
-    if (!current || typeof current !== "object") return null;
-    current = current[key];
-  }
-  return current;
-}
+import ActionButtons from "@/components/common/ActionButtons";
+import ErrorMessage from "@/components/common/ErrorMessage";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
 
-// ✅ Group fields by their base array path
 function groupFieldsByArray(fields: WidgetProp["fields"]) {
   const grouped: Record<string, { label: string; keyPath: string[] }[]> = {};
 
@@ -46,15 +37,11 @@ const TableWidget = ({ widget }: { widget: WidgetProp }) => {
   const [tableStructures, setTableStructures] = useState<
     Record<
       string,
-      {
-        arrayData: any[];
-        columns: { label: string; key: string }[];
-      }
+      { arrayData: any[]; columns: { label: string; key: string }[] }
     >
   >({});
   const { removeWidget } = useWidgetsStore();
 
-  // ✅ Fetch data
   const fetchData = useCallback(async () => {
     if (!widget.endpoint) return;
     setLoading(true);
@@ -66,9 +53,9 @@ const TableWidget = ({ widget }: { widget: WidgetProp }) => {
           ? { headers: widget.headers }
           : {}
       );
-      if (!response.ok) {
+      if (!response.ok)
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
+
       const result = await response.json();
       setData(result);
       setError(null);
@@ -99,9 +86,8 @@ const TableWidget = ({ widget }: { widget: WidgetProp }) => {
     } finally {
       setLoading(false);
     }
-  }, [widget.endpoint, widget.fields, widget.headers]);
+  }, []);
 
-  // ✅ Refresh interval
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, widget.refreshInterval * 1000);
@@ -118,54 +104,25 @@ const TableWidget = ({ widget }: { widget: WidgetProp }) => {
 
   return (
     <div className="w-full space-y-4 sm:space-y-6">
-      {/* Controls - Touch Friendly */}
-      <div className="flex items-center justify-end gap-2 sm:gap-4">
-        <RefreshCcw
-          size={18}
-          className={cn(
-            "cursor-pointer touch-manipulation min-w-[44px] min-h-[44px] p-3 rounded-full hover:bg-muted/50 transition-colors sm:min-w-auto sm:min-h-auto sm:p-0 hover:text-primary",
-            loading ? "animate-spin" : ""
-          )}
-          onClick={fetchData}
-        />
-        <Trash2
-          className="cursor-pointer touch-manipulation min-w-[44px] min-h-[44px] p-3 rounded-full hover:bg-muted/50 transition-colors sm:min-w-auto sm:min-h-auto sm:p-0 hover:text-destructive"
-          size={18}
-          onClick={() => removeWidget(widget.id)}
-        />
-      </div>
+      {/* Controls */}
+      <ActionButtons
+        onRefresh={fetchData}
+        onRemove={() => removeWidget(widget.id)}
+        loading={loading}
+      />
 
-      {/* Loading State */}
-      {loading && !error && !data && (
-        <div className="flex items-center justify-center py-8 sm:py-12">
-          <ScaleLoader className="h-12 w-12 sm:h-16 sm:w-16" color="#00fa19" />
-        </div>
-      )}
+      {/* Loading */}
+      {loading && !error && !data && <LoadingSpinner />}
 
-      {/* Error State */}
-      {error && (
-        <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-          <AlertCircle
-            size={16}
-            className="text-red-500 flex-shrink-0 mt-0.5"
-          />
-          <div className="min-w-0 flex-1">
-            <div className="text-sm font-medium text-red-700 dark:text-red-400 break-words">
-              Error fetching data
-            </div>
-            <div className="text-xs text-red-600 dark:text-red-300 mt-1 break-words">
-              {error}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Error */}
+      {error && <ErrorMessage error={error} />}
 
-      {/* Tables with Horizontal Scroll */}
+      {/* Tables */}
       {data && Object.keys(tableStructures).length > 0 && (
         <div className="space-y-4 sm:space-y-6">
           {Object.entries(tableStructures).map(([basePath, structure]) => (
             <div key={basePath} className="space-y-2 sm:space-y-3">
-              {/* Table Title */}
+              {/* Title */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-1">
                 <h3 className="text-base sm:text-lg font-semibold text-foreground break-words">
                   {basePath || "Data Table"}
