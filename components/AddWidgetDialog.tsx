@@ -137,11 +137,13 @@ const HeaderConfig = memo(
         <Input
           type="text"
           value={headerKey}
+          placeholder="header key (for ex:- X-Api-Key)"
           onChange={(e) => onKeyChange(e.target.value)}
         />
         <Input
           type="text"
           value={headerValue}
+          placeholder="header value (for ex:- your-api-key-xyz)"
           onChange={(e) => onValueChange(e.target.value)}
         />
       </div>
