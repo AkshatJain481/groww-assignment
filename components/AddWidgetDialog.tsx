@@ -11,7 +11,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChartColumnBig, Grid3x3, RefreshCcw, Table, X } from "lucide-react";
+import {
+  ChartColumnBig,
+  ChartLine,
+  Grid3x3,
+  RefreshCcw,
+  Table,
+  X,
+} from "lucide-react";
 import {
   Card,
   CardAction,
@@ -27,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "./ui/switch";
 import ApiDataTable from "./ApiDataTable";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -43,17 +51,29 @@ const AddWidgetDialog = memo(({ children }: { children: React.ReactNode }) => {
   const [widgetType, setWidgetType] = useState<"card" | "table" | "chart">(
     "card"
   );
+  const [isHeadersOpen, setIsHeadersOpen] = useState<boolean>(false);
+  const [headerKey, setHeaderKey] = useState<string>("");
+  const [headerValue, setHeaderValue] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [apiData, setApiData] = useState<any>(null);
   const [selectedFields, setSelectedFields] = useState<SelectedField[]>([]);
   const [searchField, setSearchField] = useState<string>("");
+  const [chartType, setChartType] = useState<"line" | "bar">("line");
+
   const debouncedSearch = useDebounce(searchField, 1500);
   const { addWidget } = useWidgetsStore();
 
   const handleTest = async () => {
     try {
       setLoading(true);
-      const res = await fetch(endpoint);
+      const headers: Record<string, string> = {};
+      if (headerKey && headerValue && isHeadersOpen) {
+        headers[headerKey] = headerValue;
+      }
+      const res = await fetch(
+        endpoint,
+        Object.keys(headers).length ? { headers } : {}
+      );
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const json = await res.json();
       setApiData(json);
@@ -69,17 +89,9 @@ const AddWidgetDialog = memo(({ children }: { children: React.ReactNode }) => {
 
   const handleAddField = useCallback(
     (path: string, value: any) => {
-      setSelectedFields((prev) => {
-        if (widgetType === "chart" && prev.length > 1) {
-          toast.info(
-            "Chart type only supports two values, one for x-axis and one for y-axis!"
-          );
-          return prev;
-        }
-        return prev.find((f) => f.path === path)
-          ? prev
-          : [...prev, { path, value }];
-      });
+      setSelectedFields((prev) =>
+        prev.find((f) => f.path === path) ? prev : [...prev, { path, value }]
+      );
     },
     [widgetType, toast]
   );
@@ -108,14 +120,15 @@ const AddWidgetDialog = memo(({ children }: { children: React.ReactNode }) => {
         "Please fill all labels for each field in selected fields!"
       );
       return;
-    } else if (widgetType == "chart" && selectedFields.length != 2) {
-      toast.warning("Please select 2 fields for chart widget!");
-      return;
     } else if (widgetType == "chart" && !hasXYLabels(selectedFields)) {
       toast.warning(
-        "Please select a unique axis for each field. Both fields should have there own axis!"
+        "Please select a unique x-axis field. y-axis fields can be more than one!"
       );
       return;
+    }
+    const headers: Record<string, string> = {};
+    if (headerKey && headerValue && isHeadersOpen) {
+      headers[headerKey] = headerValue;
     }
     const newWidget: WidgetProp = {
       id: new Date().toISOString(),
@@ -124,6 +137,8 @@ const AddWidgetDialog = memo(({ children }: { children: React.ReactNode }) => {
       refreshInterval,
       widgetType,
       fields: selectedFields,
+      headers,
+      chartType
     };
     addWidget(newWidget);
     resetForm();
@@ -138,13 +153,17 @@ const AddWidgetDialog = memo(({ children }: { children: React.ReactNode }) => {
     setSelectedFields([]);
     setRefreshInterval(30);
     setWidgetType("card");
+    setHeaderKey("");
+    setHeaderValue("");
     setOpen(false);
   };
 
-  const hasXYLabels = (arr: { label?: string }[]) =>
-    arr.length === 2 &&
-    arr.some((item) => item.label === "x-axis") &&
-    arr.some((item) => item.label === "y-axis");
+  const hasXYLabels = (arr: { label?: string }[]) => {
+    const xCount = arr.filter((item) => item.label === "x-axis").length;
+    const yCount = arr.filter((item) => item.label === "y-axis").length;
+
+    return xCount === 1 && yCount >= 1;
+  };
 
   const hasValidLabels = (arr: SelectedField[]) =>
     arr.every(
@@ -187,6 +206,35 @@ const AddWidgetDialog = memo(({ children }: { children: React.ReactNode }) => {
           </Button>
         </div>
 
+        <Label htmlFor="header-key">header config for API key</Label>
+        <Switch
+          id="header-key"
+          checked={isHeadersOpen}
+          onCheckedChange={setIsHeadersOpen}
+          className="cursor-pointer"
+        />
+        <div
+          className={cn(
+            "flex items-center justify-between gap-4",
+            !isHeadersOpen && "hidden"
+          )}
+        >
+          <Input
+            type="text"
+            value={headerKey}
+            onChange={(e) => {
+              setHeaderKey(e.target.value);
+            }}
+          />
+          <Input
+            type="text"
+            value={headerValue}
+            onChange={(e) => {
+              setHeaderValue(e.target.value);
+            }}
+          />
+        </div>
+
         <Label>
           Refresh Interval (seconds) (should be in the range 1 to 1800)
         </Label>
@@ -207,27 +255,48 @@ const AddWidgetDialog = memo(({ children }: { children: React.ReactNode }) => {
             variant={widgetType === "card" ? "default" : "outline"}
             onClick={() => handleWidgetType("card")}
           >
-            <Grid3x3 className="mr-1 h-4 w-4" /> Card
+            <Grid3x3 /> Card
           </Button>
           <Button
             size="sm"
             variant={widgetType === "table" ? "default" : "outline"}
             onClick={() => handleWidgetType("table")}
           >
-            <Table className="mr-1 h-4 w-4" /> Table
+            <Table /> Table
           </Button>
           <Button
             size="sm"
             variant={widgetType === "chart" ? "default" : "outline"}
             onClick={() => handleWidgetType("chart")}
           >
-            <ChartColumnBig className="mr-1 h-4 w-4" /> Chart
+            <ChartColumnBig /> Chart
           </Button>
         </div>
+        {widgetType === "chart" && (
+          <>
+            <Label>Chart Type</Label>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant={chartType === "line" ? "default" : "outline"}
+                onClick={() => setChartType("line")}
+              >
+                <ChartLine /> Line Chart
+              </Button>
+              <Button
+                size="sm"
+                variant={chartType === "bar" ? "default" : "outline"}
+                onClick={() => setChartType("bar")}
+              >
+                <Table /> Bar Chart
+              </Button>
+            </div>
+          </>
+        )}
 
         <Label>Search Fields</Label>
         <Input
-          value={searchField}
+          value={searchField || ""}
           onChange={(e) => setSearchField(e.target.value)}
           placeholder="search fields..."
           type="search"

@@ -8,6 +8,8 @@ export interface WidgetProp {
   refreshInterval: number;
   widgetType: "card" | "chart" | "table";
   fields: { path: string; value: any; label?: string }[];
+  headers: Record<string, string>;
+  chartType: "line" | "bar";
 }
 
 interface WidgetsStore {
@@ -24,9 +26,9 @@ const useWidgetsStore = create<WidgetsStore>()(
       widgets: [],
       addWidget: (widget) =>
         set((state) => ({ widgets: [...state.widgets, widget] })),
-      removeWidget: (widgetName) =>
+      removeWidget: (widgetId) =>
         set((state) => ({
-          widgets: state.widgets.filter((w) => w.widgetName !== widgetName),
+          widgets: state.widgets.filter((w) => w.id !== widgetId),
         })),
       clearWidgets: () => set({ widgets: [] }),
       reorderWidgets: (widgets) => set({ widgets }),

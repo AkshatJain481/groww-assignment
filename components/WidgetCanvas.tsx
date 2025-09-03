@@ -1,67 +1,16 @@
 "use client";
 
-import React from "react";
 import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
-  useSortable,
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { GripVertical } from "lucide-react";
 import useWidgetsStore from "@/store/useWidgetsStore";
+import DraggableWidget from "./DraggableWidget";
 
-// Draggable Widget Card
-function DraggableWidget({ widget }: { widget: any }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: widget.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  return (
-    <Card
-      ref={setNodeRef}
-      style={style}
-      className={`relative transition-all duration-200 hover:shadow-md bg-background border ${
-        isDragging ? "opacity-50 shadow-lg scale-105" : ""
-      }`}
-    >
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium">
-            {widget.widgetName}
-          </CardTitle>
-          <div
-            {...attributes}
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing p-1 rounded-sm hover:bg-accent"
-          >
-            <GripVertical className="h-4 w-4" />
-          </div>
-        </div>
-        <div className="text-xs text-muted-foreground">
-          Type: {widget.widgetType}
-        </div>
-      </CardHeader>
-    </Card>
-  );
-}
-
-// Main Canvas Component
-export default function WidgetCanvas() {
+const WidgetCanvas = () => {
   const { widgets, reorderWidgets } = useWidgetsStore();
-
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
 
@@ -89,7 +38,7 @@ export default function WidgetCanvas() {
           items={widgets.map((w) => w.id)}
           strategy={rectSortingStrategy}
         >
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          <div className="flex flex-wrap gap-4">
             {widgets.map((widget) => (
               <DraggableWidget key={widget.id} widget={widget} />
             ))}
@@ -98,4 +47,6 @@ export default function WidgetCanvas() {
       </DndContext>
     </div>
   );
-}
+};
+
+export default WidgetCanvas;
