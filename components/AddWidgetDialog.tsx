@@ -310,7 +310,7 @@ const AddWidgetDialog = memo(
         }}
       >
         <DialogTrigger asChild>{children}</DialogTrigger>
-        <DialogContent className="md:max-w-2xl lg:max-w-5xl dark:bg-slate-800 h-[95vh] overflow-y-auto">
+        <DialogContent className="md:max-w-2xl lg:max-w-5xl dark:bg-slate-800 h-[80vh] sm:h-[95vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold">
               {widgetData ? "Edit Widget" : "Add New Widget"}
