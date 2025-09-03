@@ -2,6 +2,7 @@ import { RefreshCcw, Trash2, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { WidgetProp } from "@/store/useWidgetsStore";
 import AddWidgetDialog from "../AddWidgetDialog";
+import AlertDialogBox from "./AlertDialogBox";
 
 const ActionButtons = ({
   widget,
@@ -31,12 +32,17 @@ const ActionButtons = ({
         loading && "animate-spin"
       )}
     />
-    <Trash2
-      size={18}
-      onClick={onRemove}
-      aria-label="Remove widget"
-      className="cursor-pointer touch-manipulation p-3 rounded-full transition-colors hover:bg-muted/50 sm:p-0"
-    />
+    <AlertDialogBox
+      onConfirm={onRemove}
+      title="Are you sure you want to delete this widget?"
+      description="This action will result in deletion of the widget!"
+    >
+      <Trash2
+        size={18}
+        aria-label="Remove widget"
+        className="cursor-pointer touch-manipulation p-3 rounded-full transition-colors hover:bg-muted/50 sm:p-0"
+      />
+    </AlertDialogBox>
   </div>
 );
 
