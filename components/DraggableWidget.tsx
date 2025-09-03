@@ -47,7 +47,7 @@ const DraggableWidget = ({ widget }: { widget: WidgetProp }) => {
       ref={setNodeRef}
       style={style}
       className={cn(
-        "relative flex-grow min-w-[300px] gap-0 bg-background border transition-all duration-200 hover:shadow-md dark:border-zinc-700",
+        "relative flex-grow  min-w-[300px] md:min-w-[500px] gap-0 bg-background border transition-all duration-200 hover:shadow-md dark:border-zinc-700",
         isDragging && "opacity-50 shadow-lg scale-105",
         widgetTypeClasses[widget.widgetType]
       )}

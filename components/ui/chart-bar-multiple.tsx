@@ -38,11 +38,9 @@ interface ChartBarMultipleProps {
 export function ChartBarMultiple({
   chartData,
   title = "Bar Chart",
-  description = "Showing data visualization",
   xAxisKey,
 }: ChartBarMultipleProps) {
   // Generate dynamic chart configuration
-  console.log(chartData);
   const { chartConfig, dataKeys, detectedXAxisKey } = useMemo(() => {
     if (!chartData || chartData.length === 0) {
       return { chartConfig: {}, dataKeys: [], detectedXAxisKey: "" };

@@ -94,6 +94,7 @@ const ChartWidget = ({ widget }: { widget: WidgetProp }) => {
     <div className="space-y-6">
       {/* Controls */}
       <ActionButtons
+        widget={widget}
         onRefresh={fetchData}
         onRemove={() => removeWidget(widget.id)}
         loading={loading}

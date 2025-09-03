@@ -87,6 +87,7 @@ const CardWidget = ({ widget }: { widget: WidgetProp }) => {
   return (
     <div className="w-full max-w-full overflow-hidden">
       <ActionButtons
+        widget={widget}
         loading={loading}
         onRefresh={fetchData}
         onRemove={() => removeWidget(widget.id)}

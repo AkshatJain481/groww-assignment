@@ -106,6 +106,7 @@ const TableWidget = ({ widget }: { widget: WidgetProp }) => {
     <div className="w-full space-y-4 sm:space-y-6">
       {/* Controls */}
       <ActionButtons
+        widget={widget}
         onRefresh={fetchData}
         onRemove={() => removeWidget(widget.id)}
         loading={loading}

@@ -34,7 +34,6 @@ const CHART_COLORS = [
 interface ChartLineMultipleProps {
   chartData: Record<string, any>[];
   title?: string;
-  description?: string;
   xAxisKey?: string;
   excludeKeys?: string[];
 }
@@ -42,7 +41,6 @@ interface ChartLineMultipleProps {
 export function ChartLineMultiple({
   chartData,
   title = "Line Chart",
-  description = "Showing data visualization",
   xAxisKey,
   excludeKeys = [],
 }: ChartLineMultipleProps) {
@@ -90,7 +88,6 @@ export function ChartLineMultiple({
     return { chartConfig: config, dataKeys: yKeys, detectedXAxisKey: xKey };
   }, [chartData, xAxisKey, excludeKeys]);
 
-  // Render dynamic line series
   const renderLines = () =>
     dataKeys.map((key) => (
       <Line
@@ -119,41 +116,27 @@ export function ChartLineMultiple({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig}>
-          <LineChart
-            accessibilityLayer
-            data={chartData}
-            margin={{ left: 12, right: 12 }}
-          >
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey={detectedXAxisKey}
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              tickFormatter={(value) =>
-                typeof value === "string" && value.length > 6
-                  ? value.slice(0, 3)
-                  : value
-              }
-            />
-            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-            {renderLines()}
-          </LineChart>
-        </ChartContainer>
-      </CardContent>
-      <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 leading-none font-medium">
-          Dynamic line chart visualization <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="text-muted-foreground leading-none">{description}</div>
-      </CardFooter>
-    </Card>
+    <ChartContainer config={chartConfig}>
+      <LineChart
+        accessibilityLayer
+        data={chartData}
+        margin={{ left: 12, right: 12 }}
+      >
+        <CartesianGrid vertical={false} />
+        <XAxis
+          dataKey={detectedXAxisKey}
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          tickFormatter={(value) =>
+            typeof value === "string" && value.length > 6
+              ? value.slice(0, 3)
+              : value
+          }
+        />
+        <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+        {renderLines()}
+      </LineChart>
+    </ChartContainer>
   );
 }
