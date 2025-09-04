@@ -142,62 +142,55 @@ export function ChartLineMultiple({
   }
 
   return (
-    <Card>
-      <CardHeader className="flex items-center justify-between">
-        <CardTitle>{title}</CardTitle>
-        <div className="flex gap-4">
-          <ZoomIn
-            className="cursor-pointer"
-            onClick={() => {
-              if (zoom * 2 > 5) return;
-              setZoom(zoom * 2);
-            }}
-          />
-          <ZoomOut
-            className="cursor-pointer"
-            onClick={() => {
-              if (zoom / 2 < 1) return;
-              setZoom(zoom / 2);
-            }}
-          />
-          <ChevronLeft
-            className="cursor-pointer"
-            onClick={() => {
-              setOffset((prev) => Math.max(prev - 5, 0));
-            }}
-          />
-          <ChevronRight
-            className="cursor-pointer"
-            onClick={() => {
-              setOffset((prev) =>
-                Math.min(prev + 5, Math.max(chartData.length - 10, 0))
-              );
-            }}
-          />
-          <RotateCcw
-            className="cursor-pointer"
-            onClick={() => {
-              setZoom(1);
-              setOffset(0);
-            }}
-          />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig}>
-          <LineChart
-            accessibilityLayer
-            data={visibleData}
-            margin={{ left: 40, right: 12 }}
-          >
-            <CartesianGrid />
-            <XAxis dataKey={detectedXAxisKey} tickMargin={8} />
-            <YAxis tickMargin={8} />
-            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-            {renderLines()}
-          </LineChart>
-        </ChartContainer>
-      </CardContent>
-    </Card>
+    <div>
+      <div className="flex gap-4 mb-4">
+        <ZoomIn
+          className="cursor-pointer"
+          onClick={() => {
+            if (zoom * 2 > 5) return;
+            setZoom(zoom * 2);
+          }}
+        />
+        <ZoomOut
+          className="cursor-pointer"
+          onClick={() => {
+            if (zoom / 2 < 1) return;
+            setZoom(zoom / 2);
+          }}
+        />
+        <ChevronLeft
+          className="cursor-pointer"
+          onClick={() => {
+            setOffset((prev) => Math.max(prev - 5, 0));
+          }}
+        />
+        <ChevronRight
+          className="cursor-pointer"
+          onClick={() => {
+            setOffset((prev) =>
+              Math.min(prev + 5, Math.max(chartData.length - 10, 0))
+            );
+          }}
+        />
+        <RotateCcw
+          className="cursor-pointer"
+          onClick={() => {
+            setZoom(1);
+            setOffset(0);
+          }}
+        />
+      </div>
+      <ChartContainer config={chartConfig}>
+        <LineChart
+          accessibilityLayer
+          data={visibleData}
+        >
+          <CartesianGrid />
+          <XAxis dataKey={detectedXAxisKey} tickMargin={8} />
+          <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+          {renderLines()}
+        </LineChart>
+      </ChartContainer>
+    </div>
   );
 }

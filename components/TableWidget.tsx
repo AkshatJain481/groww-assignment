@@ -16,18 +16,25 @@ import ErrorMessage from "@/components/common/ErrorMessage";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 
 function groupFieldsByArray(fields: WidgetProp["fields"]) {
-  const grouped: Record<string, { label: string; keyPath: string[] }[]> = {};
+  const arrayGroups: Record<
+    string,
+    { label: string; key: string; path: string }[]
+  > = {};
 
   fields.forEach((f) => {
     const parts = f.path.split(" -> ").map((p) => p.trim());
     const basePath = parts.slice(0, -1).join(" -> ");
     const key = parts[parts.length - 1];
 
-    if (!grouped[basePath]) grouped[basePath] = [];
-    grouped[basePath].push({ label: f.label || "", keyPath: [key] });
+    if (!arrayGroups[basePath]) arrayGroups[basePath] = [];
+    arrayGroups[basePath].push({
+      label: f.label || key,
+      key,
+      path: f.path,
+    });
   });
 
-  return grouped;
+  return arrayGroups;
 }
 
 const TableWidget = ({ widget }: { widget: WidgetProp }) => {
@@ -65,17 +72,39 @@ const TableWidget = ({ widget }: { widget: WidgetProp }) => {
 
       Object.entries(grouped).forEach(([basePath, fields]) => {
         const parts = basePath.split(" -> ").map((p) => p.trim());
-        const arrayData = getNested(result, parts);
+        const rawData = getNested(result, parts);
 
-        if (Array.isArray(arrayData)) {
-          newStructures[basePath] = {
-            arrayData,
-            columns: fields.map((f) => ({
-              label: f.label,
-              key: f.keyPath[0],
-            })),
-          };
+        let arrayData: any[] = [];
+        let columns: { label: string; key: string }[] = [];
+
+        if (Array.isArray(rawData)) {
+          // ✅ Already an array
+          arrayData = rawData;
+          columns = fields.map((f) => ({ label: f.label, key: f.key }));
+        } else if (rawData && typeof rawData === "object") {
+          // ✅ Convert object-of-objects → array
+          arrayData = Object.entries(rawData).map(([key, value]) => ({
+            _key: key,
+            ...(value as object),
+          }));
+          columns = [
+            { label: "Date", key: "_key" },
+            ...fields.map((f) => ({ label: f.label, key: f.key })),
+          ];
+        } else {
+          // ✅ Fallback to single row
+          const singleRow = fields.reduce<Record<string, any>>((row, f) => {
+            row[f.key] = getNested(
+              result,
+              f.path.split(" -> ").map((p) => p.trim())
+            );
+            return row;
+          }, {});
+          arrayData = [singleRow];
+          columns = fields.map((f) => ({ label: f.label, key: f.key }));
         }
+
+        newStructures[basePath] = { arrayData, columns };
       });
 
       setTableStructures(newStructures);

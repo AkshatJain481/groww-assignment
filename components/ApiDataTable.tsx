@@ -1,6 +1,6 @@
 import { memo, useMemo, useCallback } from "react";
 import { Plus } from "lucide-react";
-import { extractArrayKeys, flattenJson } from "@/lib/utils";
+import { extractArrayKeys, extractChartFields, flattenJson } from "@/lib/utils";
 
 type ApiDataTableProps = {
   apiData: unknown;
@@ -15,7 +15,13 @@ const ApiDataTable = memo(
   ({ apiData, handleAddField, filterFields, type }: ApiDataTableProps) => {
     const cleanData = useMemo<FlattenedItem[]>(() => {
       if (!apiData) return [];
-      return type === "card" ? flattenJson(apiData) : extractArrayKeys(apiData);
+      if (type === "card") {
+        return flattenJson(apiData);
+      } else if (type === "table") {
+        return extractArrayKeys(apiData);
+      } else {
+        return extractChartFields(apiData);
+      }
     }, [apiData, type]);
 
     const searchWords = useMemo(

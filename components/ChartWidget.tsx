@@ -16,27 +16,39 @@ const ChartWidget = ({ widget }: { widget: WidgetProp }) => {
   const [error, setError] = useState<string | null>(null);
   const { removeWidget } = useWidgetsStore();
 
-  // ✅ Fetch + transform data
+  const normalizeArrayData = (data: any): any[] => {
+    if (Array.isArray(data)) return data;
+    if (
+      data &&
+      typeof data === "object" &&
+      Object.values(data).every((v) => typeof v === "object" && v !== null)
+    ) {
+      return Object.entries(data).map(([key, value]) => ({
+        _key: key,
+        ...(value as object),
+      }));
+    }
+    return [];
+  };
+
   const fetchData = useCallback(async () => {
     if (!widget.endpoint) return;
     setLoading(true);
 
     try {
-      const response = await fetch(
-        widget.endpoint,
-        widget.headers && Object.keys(widget.headers).length
-          ? { headers: widget.headers }
-          : {}
-      );
+      const response = await fetch(widget.endpoint, {
+        headers:
+          widget.headers && Object.keys(widget.headers).length
+            ? widget.headers
+            : undefined,
+      });
 
-      if (!response.ok) {
+      if (!response.ok)
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
 
       const result = await response.json();
       setError(null);
 
-      // ✅ Separate x-axis and y-axis fields
       const xField = widget.fields.find(
         (f) => f.label?.toLowerCase() === "x-axis"
       );
@@ -50,22 +62,26 @@ const ChartWidget = ({ widget }: { widget: WidgetProp }) => {
         );
       }
 
-      // ✅ Get array data from API
       const parts = xField.path.split(" -> ").map((p) => p.trim());
-      const basePath = parts.slice(0, -1);
-      const arrayData = getNested(result, basePath);
+      const arrayData =
+        parts.length === 1
+          ? result[parts[0]]
+          : getNested(result, parts.slice(0, -1));
 
-      if (!Array.isArray(arrayData)) {
-        throw new Error("Expected array in response");
+      const normalized = normalizeArrayData(arrayData);
+      if (!Array.isArray(normalized) || normalized.length === 0) {
+        throw new Error("Expected array or array-like object in response");
       }
 
-      const xKey = parts[parts.length - 1];
-
-      // ✅ Build chart data
-      const transformed = arrayData.map((row: any) => {
+      // Transform into chart-ready data
+      const transformed = normalized.map((row) => {
         const point: Record<string, any> = {};
-        point[xField.label || xKey] = row[xKey];
 
+        // Handle x-axis
+        point[xField.label || "x-axis"] =
+          "_key" in row ? row._key : row[parts[parts.length - 1]];
+
+        // Handle y-axis
         yFields.forEach((f) => {
           const yKey = f.path.split(" -> ").pop()!;
           point[yKey] = Number(row[yKey]) || 0;
@@ -87,11 +103,10 @@ const ChartWidget = ({ widget }: { widget: WidgetProp }) => {
     fetchData();
     const interval = setInterval(fetchData, widget.refreshInterval * 1000);
     return () => clearInterval(interval);
-  }, [fetchData, widget.refreshInterval , widget]);
+  }, [fetchData, widget.refreshInterval, widget]);
 
   return (
     <div className="space-y-6">
-      {/* Controls */}
       <ActionButtons
         widget={widget}
         onRefresh={fetchData}
@@ -99,24 +114,14 @@ const ChartWidget = ({ widget }: { widget: WidgetProp }) => {
         loading={loading}
       />
 
-      {/* Loading */}
       {loading && !error && chartData.length === 0 && <LoadingSpinner />}
-
-      {/* Error */}
       {error && <ErrorMessage error={error} />}
-
-      {/* Chart */}
-      {chartData.length > 0 && (
-        <>
-          {widget.chartType === "bar" ? (
-            <ChartBarMultiple chartData={chartData} />
-          ) : (
-            <ChartLineMultiple chartData={chartData} />
-          )}
-        </>
-      )}
-
-      {/* Empty state */}
+      {chartData.length > 0 &&
+        (widget.chartType === "bar" ? (
+          <ChartBarMultiple chartData={chartData} />
+        ) : (
+          <ChartLineMultiple chartData={chartData} />
+        ))}
       {!loading && !error && chartData.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
           No Data Available

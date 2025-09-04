@@ -20,7 +20,7 @@ const ActionButtons = ({
       <Settings
         aria-label="widget settings"
         size={18}
-        className="cursor-pointer touch-manipulation p-3 rounded-full transition-colors hover:bg-muted/50 sm:p-0"
+        className="cursor-pointer touch-manipulation rounded-full transition-colors hover:bg-muted/50 p-0"
       />
     </AddWidgetDialog>
     <RefreshCcw
@@ -28,7 +28,7 @@ const ActionButtons = ({
       onClick={onRefresh}
       aria-label="Refresh widget data"
       className={cn(
-        "cursor-pointer touch-manipulation p-3 rounded-full transition-colors hover:bg-muted/50 sm:p-0",
+        "cursor-pointer touch-manipulation rounded-full transition-colors hover:bg-muted/50 p-0",
         loading && "animate-spin"
       )}
     />
@@ -40,7 +40,7 @@ const ActionButtons = ({
       <Trash2
         size={18}
         aria-label="Remove widget"
-        className="cursor-pointer touch-manipulation p-3 rounded-full transition-colors hover:bg-muted/50 sm:p-0"
+        className="cursor-pointer touch-manipulation rounded-full transition-colors hover:bg-muted/50 p-0"
       />
     </AlertDialogBox>
   </div>

@@ -50,7 +50,7 @@ const DraggableWidget = ({ widget }: { widget: WidgetProp }) => {
         touchAction: "none",
       }}
       className={cn(
-        "relative flex-grow  min-w-[300px] md:min-w-[500px] gap-0 bg-background border transition-all duration-200 hover:shadow-md dark:border-zinc-700",
+        "relative flex-grow  min-w-[300px] md:min-w-[500px] gap-0 bg-background border transition-all duration-200 hover:shadow-md dark:border-zinc-700 max-h-[90vh] overflow-auto",
         isDragging && "opacity-50 shadow-lg scale-105",
         widgetTypeClasses[widget.widgetType]
       )}
