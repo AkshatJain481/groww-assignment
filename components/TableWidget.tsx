@@ -88,7 +88,7 @@ const TableWidget = ({ widget }: { widget: WidgetProp }) => {
             ...(value as object),
           }));
           columns = [
-            { label: "Date", key: "_key" },
+            { label: "", key: "_key" },
             ...fields.map((f) => ({ label: f.label, key: f.key })),
           ];
         } else {
