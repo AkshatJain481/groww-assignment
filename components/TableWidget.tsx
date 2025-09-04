@@ -86,13 +86,13 @@ const TableWidget = ({ widget }: { widget: WidgetProp }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [widget]);
 
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, widget.refreshInterval * 1000);
     return () => clearInterval(interval);
-  }, [fetchData, widget.refreshInterval]);
+  }, [fetchData, widget.refreshInterval, widget]);
 
   const formatValue = (value: any): string => {
     if (value === null || value === undefined) return "N/A";

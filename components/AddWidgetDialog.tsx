@@ -195,7 +195,7 @@ const AddWidgetDialog = memo(
         toast.success("API connected successfully!");
       } catch (e) {
         console.error("API error", e);
-        toast.error("Error connecting API!");
+        toast.error("Some error occurred connecting API!");
         setApiData(null);
       } finally {
         setLoading(false);

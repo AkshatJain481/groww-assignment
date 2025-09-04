@@ -81,14 +81,13 @@ const ChartWidget = ({ widget }: { widget: WidgetProp }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [widget]);
 
-  // ✅ Refresh interval
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, widget.refreshInterval * 1000);
     return () => clearInterval(interval);
-  }, [fetchData, widget.refreshInterval]);
+  }, [fetchData, widget.refreshInterval , widget]);
 
   return (
     <div className="space-y-6">
