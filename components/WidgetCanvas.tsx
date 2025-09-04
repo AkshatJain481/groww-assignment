@@ -41,7 +41,7 @@ const WidgetCanvas = () => {
   }
 
   return (
-    <div className="p-4 overflow-x-hidden h-[calc(100vh-58px)] overflow-y-auto">
+    <div className="p-2 overflow-x-hidden h-[calc(100vh-60px)] overflow-y-auto">
       <DndContext
         collisionDetection={closestCenter}
         onDragStart={(event) => {
