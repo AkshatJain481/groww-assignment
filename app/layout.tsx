@@ -38,8 +38,8 @@ const RootLayout = ({
         >
           <Navbar />
           <main>{children}</main>
+          <Toaster position="top-right" richColors />
         </ThemeProvider>
-        <Toaster position="top-right" richColors />
       </body>
     </html>
   );
