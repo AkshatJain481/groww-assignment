@@ -8,22 +8,15 @@ export function cn(...inputs: ClassValue[]) {
 export function flattenJson(
   obj: any,
   parent = "",
-  res: { path: string; value: any }[] = [],
-  showArrays = false
+  res: { path: string; value: any }[] = []
 ) {
   if (obj === null) return res;
 
   if (Array.isArray(obj)) {
-    if (showArrays && parent) {
-      res.push({ path: parent, value: obj });
-    }
-    // If arrays should not expand further when showArrays=true, stop here
-    if (!showArrays) {
-      obj.forEach((item, i) => {
-        const newPath = `${parent}[${i}]`;
-        flattenJson(item, newPath, res, showArrays);
-      });
-    }
+    obj.forEach((item, i) => {
+      const newPath = `${parent}[${i}]`;
+      flattenJson(item, newPath, res);
+    });
     return res;
   }
 
@@ -35,7 +28,7 @@ export function flattenJson(
         // ✅ Push only the key, but keep value for preview
         res.push({ path: newPath, value: v });
       } else {
-        flattenJson(v, newPath, res, showArrays);
+        flattenJson(v, newPath, res);
       }
     }
     return res;
