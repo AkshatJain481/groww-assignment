@@ -178,7 +178,7 @@ const AddWidgetDialog = memo(
     const debouncedSearch = useDebounce(searchField, 800);
     const { addWidget, updateWidget } = useWidgetsStore();
 
-    const handleTest = useCallback(async () => {
+    const handleTest = async () => {
       try {
         setLoading(true);
         const headers: Record<string, string> = {};
@@ -200,7 +200,7 @@ const AddWidgetDialog = memo(
       } finally {
         setLoading(false);
       }
-    }, [endpoint, headerKey, headerValue, isHeadersOpen]);
+    };
 
     const handleAddField = useCallback((path: string, value: unknown) => {
       setSelectedFields((prev) =>
