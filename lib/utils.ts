@@ -5,11 +5,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function flattenJson(
-  obj: any,
-  parent = "",
-  res: { path: string; value: any }[] = []
-) {
+type PathInfo = { path: string; value: unknown };
+
+export function flattenJson(obj: any, parent = "", res: PathInfo[] = []) {
   if (obj === null) return res;
 
   if (Array.isArray(obj)) {
@@ -36,8 +34,6 @@ export function flattenJson(
 
   return res;
 }
-
-type PathInfo = { path: string; value: any };
 
 export function extractArrayKeys(obj: any, parent: string = ""): PathInfo[] {
   let result: PathInfo[] = [];
